@@ -10,7 +10,7 @@ export function FindName({ setRes, create }) {
   const [timer, setTimer] = useState(null);
 
   useEffect(() => {
-    if (!form.name) {
+    if (form.name === "") {
       setUser([]);
       return;
     }
@@ -21,7 +21,6 @@ export function FindName({ setRes, create }) {
       try {
         const res = await findUser({ name: form.name.toLocaleLowerCase() });
         setUser(res.data || []);
-        console.log("res.data =>", res.data);
       } catch (error) {
         toast.error(error.response?.data?.error || "User not found");
       }

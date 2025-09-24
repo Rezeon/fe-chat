@@ -12,6 +12,15 @@ export const userApi = () => {
       },
     };
   };
+  const jsontype = () => {
+    const token = localStorage.getItem("token");
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    };
+  };
 
   return {
     login: async (payload) => {
@@ -39,7 +48,7 @@ export const userApi = () => {
       return axios.post(`${api}/users/logout`, {}, authHeaders());
     },
     findUser: async (payload) => {
-      return axios.post(`${api}/users/find`, payload, authHeaders());
+      return axios.post(`${api}/users/find`, payload, jsontype());
     },
   };
 };
