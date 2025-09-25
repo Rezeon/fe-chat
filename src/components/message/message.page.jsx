@@ -43,7 +43,6 @@ export function MessageContent({
     } else {
       setForm({ content: "", image: null });
     }
-    setEditMessageId(null);
   }, [editMessageId, messages]);
 
   const handleDelete = async (id) => {
