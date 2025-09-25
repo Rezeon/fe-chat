@@ -13,10 +13,17 @@ import { messageApi } from "../../api/message.api";
 import toast from "react-hot-toast";
 import { useDB } from "../../utils/get.message";
 import { WsSetting } from "../../utils/ws.utils";
+import { useMe } from "../../utils/user";
 
-export function MessageContent({ messages, selectedUser, setMessages, setOpenF }) {
+export function MessageContent({
+  messages,
+  selectedUser,
+  setMessages,
+  setOpenF,
+}) {
   const { create, messageById, update, deleted } = messageApi();
   const { getAll, saveAll } = useDB();
+  const user = useMe();
   const messagesEndRef = useRef(null);
   const [editMessageId, setEditMessageId] = useState(null);
   const wsRef = useRef(null);
@@ -103,7 +110,7 @@ export function MessageContent({ messages, selectedUser, setMessages, setOpenF }
   useEffect(() => {
     if (!selectedUser?.ID) return;
     WsSetting({
-      wsRef: wsRef,
+      wsRef,
       db: "messages",
       created: "message_created",
       update: "message_updated",
@@ -111,18 +118,7 @@ export function MessageContent({ messages, selectedUser, setMessages, setOpenF }
       saveAll,
       setF: [setMessages],
     });
-    return () => {
-      if (
-        wsRef.current &&
-        (wsRef.current.readyState === WebSocket.OPEN ||
-          wsRef.current.readyState === WebSocket.CONNECTING)
-      ) {
-        wsRef.current.close();
-        console.log("WebSocket closed");
-      }
-    };
   }, [selectedUser]);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -139,7 +135,10 @@ export function MessageContent({ messages, selectedUser, setMessages, setOpenF }
   return (
     <div className="relative h-screen text-gray-400 flex flex-col justify-end">
       <div className="w-full absolute top-0 flex items-center gap-2 bg-white shadow border border-gray-100 p-2">
-        <div onClick={() => setOpenF(true)} className="w-auto md:hidden flex p-1 aspect-square cursor-pointer ">
+        <div
+          onClick={() => setOpenF(true)}
+          className="w-auto md:hidden flex p-1 aspect-square cursor-pointer "
+        >
           <StepBack size={15} color="gray" />
         </div>
         {selectedUser?.profile ? (
@@ -161,15 +160,25 @@ export function MessageContent({ messages, selectedUser, setMessages, setOpenF }
 
       <div className="flex flex-col gap-2 mt-16 p-3 overflow-y-auto custom-scrollbar">
         {messages
-          .filter((m) => m.receiver_id === selectedUser.ID)
+          .filter(
+            (m) =>
+              (m.sender_id === selectedUser.ID && m.receiver_id === user.ID) ||
+              (m.sender_id === user.ID && m.receiver_id === selectedUser.ID)
+          )
           .map((msg, idx) => (
             <div
               key={idx}
               className={`chat ${
-                msg.sender_id === selectedUser.ID ? "chat-start" : "chat-end"
+                msg.sender_id === user.ID ? "chat-end" : "chat-start"
               }`}
             >
-              <div className="chat-bubble bg-blue-500 text-white">
+              <div
+                className={`chat-bubble ${
+                  msg.sender_id === user.ID
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-300 text-black"
+                }`}
+              >
                 {msg?.image && (
                   <div className="w-full flex items-center rounded-2xl mb-2">
                     <img
@@ -198,19 +207,22 @@ export function MessageContent({ messages, selectedUser, setMessages, setOpenF }
                       })}
                       {msg?.UpdatedAt !== msg.CreatedAt && <p>(edit)</p>}
                     </span>
-                    <Settings2
-                      size={15}
-                      color="white"
-                      className="cursor-pointer"
-                      onClick={() =>
-                        setEditMessageId(editMessageId ? null : msg.ID)
-                      }
-                    />
+                    {msg.sender_id === user.ID && ( // hanya bisa edit pesan sendiri
+                      <Settings2
+                        size={15}
+                        color="white"
+                        className="cursor-pointer"
+                        onClick={() =>
+                          setEditMessageId(editMessageId ? null : msg.ID)
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           ))}
+
         <div ref={messagesEndRef} />
       </div>
 

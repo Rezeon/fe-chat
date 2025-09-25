@@ -95,8 +95,7 @@ export function PostContent() {
   };
   return (
     <>
-      {post
-        .filter((p) => p.User.ID === friend.follower_id)
+      {post.filter((p) => friend.some((pp) => pp.follower_id === p.user_id || pp.followed_id === p.user_id))
         .map((p) => (
           <div
             key={p.ID}

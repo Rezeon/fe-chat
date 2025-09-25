@@ -14,24 +14,16 @@ import { FindName } from "../user/find.user";
 import { useDB } from "../../utils/get.message";
 import { WsSetting } from "../../utils/ws.utils";
 
-export function MessageFriend({ setSelectedUser, setOpenF }) {
+export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   const { followed, followers: folloe, deleteF, create } = followApi();
   const { getAll, saveAll } = useDB();
   const wsRef = useRef(null);
-  const [messages, setMessages] = useState([]);
   const [follower, setFollowers] = useState();
   const [followeds, setFolloweds] = useState();
   const [loading, setLoading] = useState();
   const [open, setOpen] = useState("");
   const [res, setRes] = useState(false);
-  
-  useEffect(() => {
-    async function loadMessages() {
-      const local = await getAll("messages");
-      setMessages(local || []);
-    }
-    loadMessages();
-  }, [getAll]);
+
   useEffect(() => {
     async function fetchFollower() {
       try {
@@ -109,31 +101,27 @@ export function MessageFriend({ setSelectedUser, setOpenF }) {
       ),
     [follower, followeds]
   );
-  const wantFriends = useMemo(
-    () =>
-      followeds?.filter(
-        (f) => !follower?.some((ff) => ff.Followed.ID === f.Follower.ID)
-      ),
-    [follower, followeds]
-  );
-  const lastMessage = (id, f) => {
+  const wantFriends = () =>
+    followeds?.filter(
+      (f) => !follower?.some((ff) => ff.Followed.ID === f.Follower.ID)
+    );
+  const lastMessage = (id, fallback) => {
     const msgs = messages?.filter(
-      (m) => m.receiver_id === id || m.sender_id === id
+      (m) => m.receiver_id === id || m.sender_id === id // chat dengan user ini
     );
 
     if (!msgs || msgs.length === 0) {
-      return f;
+      return fallback;
     }
 
-    const last = msgs.reduce((latest, current) => {
-      return new Date(current.CreatedAt) > new Date(latest.CreatedAt)
+    const last = msgs.reduce((latest, current) =>
+      new Date(current.CreatedAt) > new Date(latest.CreatedAt)
         ? current
-        : latest;
-    });
+        : latest
+    );
 
-    return last.content;
+    return last.content || fallback;
   };
-
   const lastMessageTime = (id) => {
     const msgs = messages?.filter(
       (m) => m.receiver_id === id || m.sender_id === id
