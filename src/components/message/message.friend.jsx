@@ -13,10 +13,12 @@ import toast from "react-hot-toast";
 import { FindName } from "../user/find.user";
 import { useDB } from "../../utils/get.message";
 import { WsSetting } from "../../utils/ws.utils";
+import { useMe } from "../../utils/user";
 
 export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   const { followed, followers: folloe, deleteF, create } = followApi();
   const { getAll, saveAll } = useDB();
+  const user = useMe();
   const wsRef = useRef(null);
   const [follower, setFollowers] = useState();
   const [followeds, setFolloweds] = useState();
@@ -72,6 +74,10 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   }, []);
   const handleDel = async (id) => {
     setRes(false);
+    if (!id || id === 0) {
+      toast.error("Invalid friend ID");
+      return;
+    }
     try {
       await deleteF(Number(id));
       toast.success("friend deleted");
@@ -87,13 +93,15 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   const handleAdd = async (id) => {
     try {
       setRes(false);
-      await create(Number(id));
+      const res = await create(Number(id));
       toast.success("Just got a friend");
+      setFollowers((prev) => [...prev, { Followed: res.data }]);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to add friend");
     }
     setRes(true);
   };
+
   const mutualFriends = useMemo(
     () =>
       follower?.filter((f) =>
@@ -101,13 +109,26 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
       ),
     [follower, followeds]
   );
-  const wantFriends = () =>
-    followeds?.filter(
-      (f) => !follower?.some((ff) => ff.Followed.ID === f.Follower.ID)
-    );
+  const wantFriends = useMemo(() => {
+    if (!followeds || !follower) return [];
+
+    const currentUserId = user.ID
+
+    return followeds.filter((f) => {
+      const isSelf = f.Follower?.ID === currentUserId;
+      const isAlreadyFriend = follower.some(
+        (ff) => ff.Followed?.ID === f.Follower?.ID
+      );
+      return !isSelf && !isAlreadyFriend;
+    });
+  }, [followeds, follower]);
+
+  console.log("f", follower);
+  console.log("d", followeds);
+  console.log("s", wantFriends);
   const lastMessage = (id, fallback) => {
     const msgs = messages?.filter(
-      (m) => m.receiver_id === id || m.sender_id === id // chat dengan user ini
+      (m) => m.receiver_id === id || m.sender_id === id
     );
 
     if (!msgs || msgs.length === 0) {
