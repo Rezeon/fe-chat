@@ -8,11 +8,11 @@ import { useNavigate } from "react-router-dom";
 export function User() {
   const user = useMe();
   const { updateUser, me, deleteUser } = userApi();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: user?.name || "",
     password: "",
-    profile: null,
+    profile: user?.profile || null,
   });
   const [preview, setPreview] = useState(form?.profile || null);
   useEffect(() => {
@@ -23,7 +23,6 @@ export function User() {
           name: res.data.name,
           profile: res.data.profile,
         });
-        console.log(res.data);
       } catch (error) {
         toast.error("err", error);
       }
@@ -46,7 +45,7 @@ export function User() {
     try {
       await deleteUser(user.ID);
       toast.success("user deleted");
-      navigate("/sign-up")
+      navigate("/sign-up");
     } catch (error) {
       toast.error("err", error);
     }
@@ -77,15 +76,15 @@ export function User() {
         className="w-full bg-white flex flex-col items-start rounded-2xl shadow h-screen p-2 gap-2 pb-4"
       >
         <div className="w-full flex justify-center">
-          <div className="w-[20%] border-2 shadow border-gray-500 aspect-square rounded-full flex items-center justify-center bg-gray-100">
+          <div className="w-[30%] md:w-[20%] border-2 shadow border-gray-500 aspect-square rounded-full flex items-center justify-center bg-gray-100">
             {form.profile ? (
               <img
                 className="w-full h-full rounded-full object-cover"
-                src={form.profile}
+                src={preview || form.profile}
                 alt="profile"
               />
             ) : (
-              <User2Icon size={100} className="text-gray-400" />
+              <User2Icon size={100} className="w-full h-full rounded-full object-cover text-gray-400" />
             )}
           </div>
         </div>

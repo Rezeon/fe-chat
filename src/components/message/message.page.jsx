@@ -231,7 +231,7 @@ export function MessageContent({
             <MessageSquareCode size={30} color="gray" />
           </div>
 
-          <div className="md:w-[5%]  w-[10%]  p-2 bg-blue-500 hover:bg-blue-400 rounded-full aspect-square flex justify-center items-center relative">
+          <div className="md:w-[5%]  w-[11%]  p-2 bg-blue-500 hover:bg-blue-400 rounded-full aspect-square flex justify-center items-center relative">
             <PlusSquare size={30} color="white" />
             <input
               type="file"

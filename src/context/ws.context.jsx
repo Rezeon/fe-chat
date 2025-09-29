@@ -7,7 +7,6 @@ export const WsProvider = ({ children }) => {
   const [messages, setMessages] = useState([])
   const [followeds, setFolloweds] = useState([])
   const [post, setPosts] = useState([])
-  console.log("d", messages)
   const EventMessage = [
   {
     db: "posts",

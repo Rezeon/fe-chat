@@ -75,12 +75,8 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
     }
   };
 
-  const mutualFriends = useMemo(
-    () =>
-      follower?.filter((f) =>
-        followeds?.some((ff) => ff.Follower.ID === f.Followed.ID)
-      ),
-    [follower, followeds]
+  const mutualFriends = follower?.filter((f) =>
+    followeds?.some((ff) => ff.Follower.ID === f.Followed.ID)
   );
   const wantFriends = useMemo(() => {
     if (!followeds || !follower) return [];
