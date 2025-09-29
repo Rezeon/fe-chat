@@ -1,9 +1,13 @@
 import { BookImage, LogOut, MessageSquareCode, UserCog } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { WsSetting } from "../../utils/ws.utils";
+import { closeWs } from "../../utils/ws.close";
+import { useRef } from "react";
 
 export function SideBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const wsRef = useRef(null)
 
   const handlePage = async (s) => {
     switch (s) {
@@ -12,6 +16,7 @@ export function SideBar() {
       case "setting":
         return navigate("/setting");
       case "logout":
+        closeWs(wsRef)
         indexedDB.deleteDatabase("AppDb");
         await localStorage.removeItem("token");
         return navigate("/sign-in");

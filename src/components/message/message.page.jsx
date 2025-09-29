@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from "react";
 import { messageApi } from "../../api/message.api";
 import toast from "react-hot-toast";
 import { useDB } from "../../utils/get.message";
-import { WsSetting } from "../../utils/ws.utils";
 import { useMe } from "../../utils/user";
 
 export function MessageContent({
@@ -26,11 +25,33 @@ export function MessageContent({
   const user = useMe();
   const messagesEndRef = useRef(null);
   const [editMessageId, setEditMessageId] = useState(null);
-  const wsRef = useRef(null);
   const [form, setForm] = useState({
     content: "",
     image: null,
   });
+  useEffect(() => {
+    async function fetchMessages() {
+      try {
+        const localMsgs = await getAll("messages");
+        if (
+          localMsgs.length > 0 &&
+          localMsgs.find((m) => m.receiver_id === selectedUser.ID)
+        ) {
+          setMessages(localMsgs);
+          return;
+        } else {
+          const res = await messageById(selectedUser.ID);
+          setMessages(res.data);
+          saveAll("messages", res.data);
+        }
+      } catch (error) {
+        setMessages([]);
+      }
+    }
+    if (selectedUser?.ID) {
+      fetchMessages();
+    }
+  }, [selectedUser]);
   useEffect(() => {
     if (editMessageId) {
       const edit = messages.find((m) => m.ID === editMessageId);
@@ -83,41 +104,7 @@ export function MessageContent({
       console.log(error.response?.data || error.message);
     }
   };
-  useEffect(() => {
-    async function fetchMessages() {
-      try {
-        const localMsgs = await getAll("messages");
-        if (
-          localMsgs.length > 0 &&
-          localMsgs.find((m) => m.receiver_id === selectedUser.ID)
-        ) {
-          setMessages(localMsgs);
-          return;
-        } else {
-          const res = await messageById(selectedUser.ID);
-          setMessages(res.data);
-          saveAll("messages", res.data);
-        }
-      } catch (error) {
-        setMessages([]);
-      }
-    }
-    if (selectedUser?.ID) {
-      fetchMessages();
-    }
-  }, [selectedUser]);
-  useEffect(() => {
-    if (!selectedUser?.ID) return;
-    WsSetting({
-      wsRef,
-      db: "messages",
-      created: "message_created",
-      update: "message_updated",
-      deleted: "message_deleted",
-      saveAll,
-      setF: [setMessages],
-    });
-  }, [selectedUser]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

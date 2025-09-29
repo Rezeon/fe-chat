@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { MessageFriend } from "../components/message/message.friend";
 import { MessageContent } from "../components/message/message.page";
 import { BookOpen } from "lucide-react";
+import { WsContext } from "../context/createcontext/context";
 
 export function MessagePage() {
+  const { messages, setMessages } = useContext(WsContext);
   const [selectedUser, setSelectedUser] = useState([]);
-  const [messages, setMessages] = useState([]);
   const [open, setOpen] = useState(true);
 
   return (

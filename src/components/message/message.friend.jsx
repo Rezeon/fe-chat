@@ -7,24 +7,22 @@ import {
   UsersRoundIcon,
 } from "lucide-react";
 import { followApi } from "../../api/follow.api";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import LoadingPage from "../loading/loading";
 import toast from "react-hot-toast";
 import { FindName } from "../user/find.user";
 import { useDB } from "../../utils/get.message";
-import { WsSetting } from "../../utils/ws.utils";
 import { useMe } from "../../utils/user";
+import { WsContext } from "../../context/createcontext/context";
 
 export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   const { followed, followers: folloe, deleteF, create } = followApi();
   const { getAll, saveAll } = useDB();
+  const { followeds, setFolloweds } = useContext(WsContext);
   const user = useMe();
-  const wsRef = useRef(null);
   const [follower, setFollowers] = useState();
-  const [followeds, setFolloweds] = useState();
   const [loading, setLoading] = useState();
   const [open, setOpen] = useState("");
-  const [res, setRes] = useState(false);
 
   useEffect(() => {
     async function fetchFollower() {
@@ -39,7 +37,6 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
           const resd = await folloe();
           setFolloweds(resd.data.followers);
           saveAll("follows", resd.data.followers);
-          console.log("follows", res.data.followers);
           setLoading(true);
         }
       } catch (error) {
@@ -51,37 +48,15 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
     }
     fetchFollower();
   }, []);
-  useEffect(() => {
-    WsSetting({
-      wsRef: wsRef,
-      db: "follows",
-      created: "follow_created",
-      update: "follow_updated",
-      deleted: "follow_deleted",
-      saveAll,
-      setF: [setFollowers],
-    });
-    return () => {
-      if (
-        wsRef.current &&
-        (wsRef.current.readyState === WebSocket.OPEN ||
-          wsRef.current.readyState === WebSocket.CONNECTING)
-      ) {
-        wsRef.current.close();
-        console.log("WebSocket closed");
-      }
-    };
-  }, []);
+
   const handleDel = async (id) => {
-    setRes(false);
     if (!id || id === 0) {
       toast.error("Invalid friend ID");
       return;
     }
     try {
-      await deleteF(Number(id));
+      await deleteF(id);
       toast.success("friend deleted");
-      setRes(true);
     } catch (error) {
       toast.error("err", error);
     }
@@ -92,14 +67,12 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   };
   const handleAdd = async (id) => {
     try {
-      setRes(false);
       const res = await create(Number(id));
       toast.success("Just got a friend");
       setFollowers((prev) => [...prev, { Followed: res.data }]);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to add friend");
     }
-    setRes(true);
   };
 
   const mutualFriends = useMemo(
@@ -112,20 +85,17 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
   const wantFriends = useMemo(() => {
     if (!followeds || !follower) return [];
 
-    const currentUserId = user.ID
-
     return followeds.filter((f) => {
-      const isSelf = f.Follower?.ID === currentUserId;
-      const isAlreadyFriend = follower.some(
-        (ff) => ff.Followed?.ID === f.Follower?.ID
-      );
-      return !isSelf && !isAlreadyFriend;
+      const targetId = f.Follower?.ID;
+
+      if (targetId === user.ID) return false;
+
+      const alreadyMutual = follower.some((ff) => ff.Followed?.ID === targetId);
+
+      return !alreadyMutual;
     });
   }, [followeds, follower]);
 
-  console.log("f", follower);
-  console.log("d", followeds);
-  console.log("s", wantFriends);
   const lastMessage = (id, fallback) => {
     const msgs = messages?.filter(
       (m) => m.receiver_id === id || m.sender_id === id
@@ -207,7 +177,7 @@ export function MessageFriend({ setSelectedUser, setOpenF, messages }) {
             : "max-h-0 opacity-0 scale-95"
         }`}
       >
-        <FindName setRes={setRes} create={create} />
+        <FindName create={create} />
       </div>
       <div
         className={`overflow-hidden transition-all duration-500 ease-in-out ${

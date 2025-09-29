@@ -1,58 +1,43 @@
-export function  WsSetting({
-  wsRef,
-  db,
-  created,
-  update,
-  deleted,
-  saveAll,
-  setF = [],
-}) {
+export function WsSetting({ EventMessage,  wsRef, saveAll }) {
+  if (wsRef.current) return;
   const ws = new WebSocket(import.meta.env.VITE_WS_URL);
   wsRef.current = ws;
+
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
+    console.log("s", msg)
 
-    const updateAllStates = (callback) => {
-      setF.forEach((fn) => {
-        if (typeof fn === "function") {
-          fn(callback);
+    EventMessage.map((e) => {
+      const updateAllStates = (callback) => {
+        if (typeof e.setF === "function") {
+          e.setF(callback)
         }
-      });
-    };
+      };
+      if (msg.event === e.created) {
+        updateAllStates((prev) => {
+          const updated = [...prev, msg.data];
+          saveAll(e.db, updated);
+          return updated;
+        });
+      }
 
-    if (msg.event === created) {
-      updateAllStates((prev) => {
-        const updated = [...prev, msg.data];
-        saveAll(db, updated);
-        return updated;
-      });
-    }
+      if (msg.event === e.update) {
+        updateAllStates((prev) => {
+          const updated = prev.map((m) =>
+            m.ID === msg.data.ID ? msg.data : m
+          );
+          saveAll(e.db, updated);
+          return updated;
+        });
+      }
 
-    if (msg.event === update) {
-      updateAllStates((prev) => {
-        const updated = prev.map((m) => (m.ID === msg.data.ID ? msg.data : m));
-        saveAll(db, updated);
-        return updated;
-      });
-    }
-
-    if (msg.event === deleted) {
-      updateAllStates((prev) => {
-        const updated = prev.filter((m) => m.ID !== msg.data.ID);
-        saveAll(db, updated);
-        return updated;
-      });
-    }
-  };
-
-  return () => {
-    if (
-      wsRef.current &&
-      (wsRef.current.readyState === WebSocket.OPEN ||
-        wsRef.current.readyState === WebSocket.CONNECTING)
-    ) {
-      wsRef.current.close();
-      console.log(" WebSocket closed");
-    }
+      if (msg.event === e.deleted) {
+        updateAllStates((prev) => {
+          const updated = prev.filter((m) => m.ID !== msg.data.ID);
+          saveAll(e.db, updated);
+          return updated;
+        });
+      }
+    });
   };
 }

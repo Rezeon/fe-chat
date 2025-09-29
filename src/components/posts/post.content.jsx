@@ -1,20 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { WsSetting } from "../../utils/ws.utils";
+import { useContext, useEffect, useState } from "react";
 import { useDB } from "../../utils/get.message";
 import { postApi } from "../../api/post.api";
 import { useMe } from "../../utils/user";
 import toast from "react-hot-toast";
 import { Edit, Trash2 } from "lucide-react";
+import { WsContext } from "../../context/createcontext/context";
 
 export function PostContent() {
   const { getAllPost, update, deleted } = postApi();
   const { getAll, saveAll } = useDB();
   const user = useMe();
-  const wsRef = useRef(null);
-  const [post, setPosts] = useState([]);
+  const {post, setPosts} = useContext(WsContext)
   const [friend, setFriend] = useState([]);
   const [editPost, setEditPost] = useState(null);
-
+  console.log("s", post)
   const [form, setForm] = useState({
     content: "",
     image: null,
@@ -26,8 +25,6 @@ export function PostContent() {
     }
     loadMessages();
   }, [getAll]);
-  console.log(post);
-  console.log(friend);
   useEffect(() => {
     async function fetchPosts() {
       try {
@@ -44,29 +41,8 @@ export function PostContent() {
       }
     }
     fetchPosts();
-  }, []);
+  }, [getAll]);
 
-  useEffect(() => {
-    WsSetting({
-      wsRef,
-      db: "posts",
-      created: "post_created",
-      update: "post_updated",
-      deleted: "post_deleted",
-      saveAll,
-      setF: [setPosts],
-    });
-    return () => {
-      if (
-        wsRef.current &&
-        (wsRef.current.readyState === WebSocket.OPEN ||
-          wsRef.current.readyState === WebSocket.CONNECTING)
-      ) {
-        wsRef.current.close();
-        console.log("🔌 WebSocket closed");
-      }
-    };
-  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
 

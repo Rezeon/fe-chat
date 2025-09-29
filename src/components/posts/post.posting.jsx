@@ -3,9 +3,8 @@ import { postApi } from "../../api/post.api";
 import toast from "react-hot-toast";
 import { MessageSquareCode, PlusSquare, SendHorizonal } from "lucide-react";
 
-export function PostInput(params) {
+export function PostInput() {
   const { create } = postApi();
-  const [selectedPost, setSelectedPost] = useState(null);
   const [form, setForm] = useState({
     content: "",
     image: null,
@@ -26,7 +25,6 @@ export function PostInput(params) {
 
     try {
       await create(fd);
-      setSelectedPost(null);
       setForm({ content: "", image: null });
     } catch (error) {
       toast.error("Gagal kirim Post");

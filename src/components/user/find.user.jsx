@@ -3,7 +3,7 @@ import { userApi } from "../../api/user.api";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-export function FindName({ setRes, create }) {
+export function FindName({ create }) {
   const { findUser } = userApi();
   const [user, setUser] = useState([]);
   const [form, setForm] = useState({ name: "" });
@@ -30,8 +30,8 @@ export function FindName({ setRes, create }) {
 
   const handleAdd = async (id) => {
     try {
-      setRes(false);
       await create(Number(id));
+      
       toast.success("Just got a friend");
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to add friend");
@@ -39,7 +39,6 @@ export function FindName({ setRes, create }) {
     setForm({
       name: "",
     });
-    setRes(true);
   };
 
   return (
