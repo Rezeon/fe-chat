@@ -28,7 +28,6 @@ export function PostInput() {
       setForm({ content: "", image: null });
     } catch (error) {
       toast.error("Gagal kirim Post");
-      console.log(error.response?.data || error.message);
     }
   };
   return (

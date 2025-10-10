@@ -1,6 +1,6 @@
-export function WsSetting({ EventMessage,  wsRef, saveAll }) {
-  if (wsRef.current) return;
-  const ws = new WebSocket(import.meta.env.VITE_WS_URL);
+export function WsSetting({ user, EventMessage, wsRef, saveAll }) {
+  const token = localStorage.getItem("token");
+  const ws = new WebSocket(`${import.meta.env.VITE_WS_URL}?token=${token}`);
   wsRef.current = ws;
 
   ws.onmessage = (event) => {
@@ -10,7 +10,7 @@ export function WsSetting({ EventMessage,  wsRef, saveAll }) {
     EventMessage.map((e) => {
       const updateAllStates = (callback) => {
         if (typeof e.setF === "function") {
-          e.setF(callback)
+          e.setF(callback);
         }
       };
       if (msg.event === e.created) {

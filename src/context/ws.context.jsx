@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { WsSetting } from "../utils/ws.utils";
 import { useDB } from "../utils/get.message";
 import { WsContext } from "./createcontext/context";
+import { useMe } from "../utils/user";
 
 export const WsProvider = ({ children }) => {
+  const user = useMe()
   const [messages, setMessages] = useState([])
   const [followeds, setFolloweds] = useState([])
   const [post, setPosts] = useState([])
@@ -19,7 +21,7 @@ export const WsProvider = ({ children }) => {
     db: "follows",
     created: "follow_created",
     update: "follow_updated",
-    deleted: "follow_deleted",
+    deleted: "follow_unfollow",
     setF: setFolloweds
   },
   {
@@ -34,6 +36,7 @@ export const WsProvider = ({ children }) => {
   const { saveAll } = useDB();
   useEffect(() => {
     WsSetting({
+      user:user,
       wsRef:wsRef,
       saveAll:saveAll,
       EventMessage,
